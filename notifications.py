@@ -26,7 +26,7 @@ def send_push(db, user_id: int, title: str, body: str, icon: str = "/icon.png") 
                     "keys": {"p256dh": sub.p256dh, "auth": sub.auth},
                 },
                 data=json.dumps({"title": title, "body": body, "icon": icon}),
-                vapid_private_key=vapid_keys.get_private_key_path(),
+                vapid_private_key=vapid_keys.VAPID_PRIVATE_KEY,
                 vapid_claims=vapid_keys.VAPID_CLAIMS,
             )
         except WebPushException as exc:
