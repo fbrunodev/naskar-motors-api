@@ -23,6 +23,12 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Naskar Motors API", lifespan=lifespan)
 
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -48,8 +54,3 @@ app.include_router(notifications.router)
 @app.get("/")
 def root():
     return {"message": "Naskar Motors API working!"}
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
