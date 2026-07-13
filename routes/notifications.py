@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -93,7 +94,7 @@ def debug_vapid(_: models.User = Depends(auth.require_owner)):
 
 @router.get("/debug-subscriptions")
 def debug_subscriptions(
-    user_id: int | None = None,
+    user_id: Optional[int] = None,
     _: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
