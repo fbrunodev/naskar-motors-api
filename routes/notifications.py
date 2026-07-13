@@ -93,10 +93,14 @@ def debug_vapid(_: models.User = Depends(auth.require_owner)):
 
 @router.get("/debug-subscriptions")
 def debug_subscriptions(
+    user_id: int | None = None,
     _: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    subs = db.query(models.PushSubscription).all()
+    q = db.query(models.PushSubscription)
+    if user_id is not None:
+        q = q.filter(models.PushSubscription.user_id == user_id)
+    subs = q.order_by(models.PushSubscription.created_at).all()
     return [
         {
             "id": s.id,
