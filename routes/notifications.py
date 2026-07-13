@@ -95,7 +95,7 @@ def debug_vapid(_: models.User = Depends(auth.require_owner)):
 @router.get("/debug-subscriptions")
 def debug_subscriptions(
     user_id: Optional[int] = None,
-    _: models.User = Depends(auth.get_current_user),
+    _: models.User = Depends(auth.require_owner),
     db: Session = Depends(get_db),
 ):
     q = db.query(models.PushSubscription)
@@ -116,7 +116,7 @@ def debug_subscriptions(
 @router.delete("/debug-clear-user/{user_id}", status_code=status.HTTP_200_OK)
 def debug_clear_user_subscriptions(
     user_id: int,
-    _: models.User = Depends(auth.get_current_user),
+    _: models.User = Depends(auth.require_owner),
     db: Session = Depends(get_db),
 ):
     deleted = db.query(models.PushSubscription).filter(
