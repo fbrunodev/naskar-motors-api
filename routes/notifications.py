@@ -67,6 +67,26 @@ def test_notification(
     return {"status": "sent", "users": len(users)}
 
 
+@router.get("/debug-vapid")
+def debug_vapid(_: models.User = Depends(auth.require_owner)):
+    import base64
+    result: dict = {"vapid_public_key_env": vapid_keys.VAPID_PUBLIC_KEY}
+    try:
+        from py_vapid import Vapid
+        from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+        padded = vapid_keys.VAPID_PRIVATE_KEY + "=" * (-len(vapid_keys.VAPID_PRIVATE_KEY) % 4)
+        priv_bytes = base64.urlsafe_b64decode(padded)
+        from cryptography.hazmat.primitives.asymmetric.ec import derive_private_key, SECP256R1
+        priv_key = derive_private_key(int.from_bytes(priv_bytes, "big"), SECP256R1())
+        pub_bytes = priv_key.public_key().public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
+        derived_pub = base64.urlsafe_b64encode(pub_bytes).rstrip(b"=").decode()
+        result["derived_public_key_from_private"] = derived_pub
+        result["keys_match"] = derived_pub == vapid_keys.VAPID_PUBLIC_KEY
+    except Exception as exc:
+        result["error"] = str(exc)
+    return result
+
+
 @router.get("/jobs/check-encalhados")
 def run_check_encalhados(_: models.User = Depends(auth.require_owner)):
     from jobs.check_encalhados import check_encalhados
