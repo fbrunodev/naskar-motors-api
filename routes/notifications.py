@@ -93,7 +93,7 @@ def debug_vapid(_: models.User = Depends(auth.require_owner)):
 
 @router.get("/debug-subscriptions")
 def debug_subscriptions(
-    _: models.User = Depends(auth.require_owner),
+    _: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
     subs = db.query(models.PushSubscription).all()
