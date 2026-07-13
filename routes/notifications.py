@@ -54,15 +54,17 @@ def unsubscribe(
 
 @router.post("/test", status_code=status.HTTP_200_OK)
 def test_notification(
-    current_user: models.User = Depends(auth.get_current_user),
+    _: models.User = Depends(auth.require_owner),
     db: Session = Depends(get_db),
 ):
-    notif.send_push(
-        db, current_user.id,
-        "Naskar Motors",
-        "Notificações funcionando corretamente!",
-    )
-    return {"status": "sent"}
+    users = db.query(models.User).all()
+    for user in users:
+        notif.send_push(
+            db, user.id,
+            "Naskar Motors",
+            "Notificações funcionando corretamente!",
+        )
+    return {"status": "sent", "users": len(users)}
 
 
 @router.get("/jobs/check-encalhados")
