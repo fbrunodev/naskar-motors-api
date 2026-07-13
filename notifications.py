@@ -28,7 +28,7 @@ def send_push(db, user_id: int, title: str, body: str, icon: str = "/icon.png") 
                 },
                 data=json.dumps({"title": title, "body": body, "icon": icon}),
                 vapid_private_key=vapid_keys.VAPID_PRIVATE_KEY,
-                vapid_claims=vapid_keys.VAPID_CLAIMS,
+                vapid_claims=dict(vapid_keys.VAPID_CLAIMS),
             )
             logger.info("Push enviado com sucesso para user_id=%d endpoint=%s", user_id, sub.endpoint[:50])
         except WebPushException as exc:
