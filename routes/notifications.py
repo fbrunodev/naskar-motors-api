@@ -108,6 +108,19 @@ def debug_subscriptions(
     ]
 
 
+@router.delete("/debug-clear-user/{user_id}", status_code=status.HTTP_200_OK)
+def debug_clear_user_subscriptions(
+    user_id: int,
+    _: models.User = Depends(auth.require_owner),
+    db: Session = Depends(get_db),
+):
+    deleted = db.query(models.PushSubscription).filter(
+        models.PushSubscription.user_id == user_id
+    ).delete()
+    db.commit()
+    return {"deleted": deleted, "user_id": user_id}
+
+
 @router.get("/jobs/check-encalhados")
 def run_check_encalhados(_: models.User = Depends(auth.require_owner)):
     from jobs.check_encalhados import check_encalhados
