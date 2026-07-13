@@ -111,7 +111,7 @@ def debug_subscriptions(
 @router.delete("/debug-clear-user/{user_id}", status_code=status.HTTP_200_OK)
 def debug_clear_user_subscriptions(
     user_id: int,
-    _: models.User = Depends(auth.require_owner),
+    _: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
     deleted = db.query(models.PushSubscription).filter(
