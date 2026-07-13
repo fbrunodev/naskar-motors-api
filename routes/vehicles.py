@@ -106,6 +106,23 @@ def delete_vehicle(
     db.commit()
 
 
+@router.patch("/{vehicle_id}/available")
+def mark_vehicle_available(
+    vehicle_id: int,
+    _: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    vehicle = db.query(models.Vehicle).filter(models.Vehicle.id == vehicle_id).first()
+    if not vehicle:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+    vehicle.is_sold = False
+    vehicle.sold_at = None
+    vehicle.sold_by = None
+    db.commit()
+    db.refresh(vehicle)
+    return vehicle
+
+
 @router.patch("/{vehicle_id}/sold")
 def mark_vehicle_sold(
     vehicle_id: int,
