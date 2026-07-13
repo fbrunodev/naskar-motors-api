@@ -1,6 +1,5 @@
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 from database import get_db
@@ -8,10 +7,6 @@ import models
 import schemas
 import auth
 import notifications
-
-
-class MarkSoldRequest(BaseModel):
-    sold_by_id: Optional[int] = None
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
@@ -127,7 +122,6 @@ def mark_vehicle_available(
 def mark_vehicle_sold(
     vehicle_id: int,
     background_tasks: BackgroundTasks,
-    data: MarkSoldRequest = Body(default=MarkSoldRequest()),
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -135,13 +129,7 @@ def mark_vehicle_sold(
     if not vehicle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
 
-    # Owner can attribute the sale to a specific employee via sold_by_id
-    if current_user.role == 'owner' and data.sold_by_id:
-        seller = db.query(models.User).filter(models.User.id == data.sold_by_id).first()
-        if not seller:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendedor não encontrado")
-    else:
-        seller = current_user
+    seller = current_user
 
     vehicle.is_sold = True
     vehicle.sold_at = datetime.utcnow()
