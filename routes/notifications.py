@@ -91,6 +91,23 @@ def debug_vapid(_: models.User = Depends(auth.require_owner)):
     return result
 
 
+@router.get("/debug-subscriptions")
+def debug_subscriptions(
+    _: models.User = Depends(auth.require_owner),
+    db: Session = Depends(get_db),
+):
+    subs = db.query(models.PushSubscription).all()
+    return [
+        {
+            "id": s.id,
+            "user_id": s.user_id,
+            "endpoint": s.endpoint,
+            "created_at": str(s.created_at) if hasattr(s, "created_at") else "n/a",
+        }
+        for s in subs
+    ]
+
+
 @router.get("/jobs/check-encalhados")
 def run_check_encalhados(_: models.User = Depends(auth.require_owner)):
     from jobs.check_encalhados import check_encalhados
