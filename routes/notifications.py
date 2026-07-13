@@ -27,16 +27,20 @@ def subscribe(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    db.query(models.PushSubscription).filter(
+    existing = db.query(models.PushSubscription).filter(
         models.PushSubscription.user_id == current_user.id,
-    ).delete()
-    sub = models.PushSubscription(
-        user_id=current_user.id,
-        endpoint=data.endpoint,
-        p256dh=data.p256dh,
-        auth=data.auth,
-    )
-    db.add(sub)
+        models.PushSubscription.endpoint == data.endpoint,
+    ).first()
+    if existing:
+        existing.p256dh = data.p256dh
+        existing.auth = data.auth
+    else:
+        db.add(models.PushSubscription(
+            user_id=current_user.id,
+            endpoint=data.endpoint,
+            p256dh=data.p256dh,
+            auth=data.auth,
+        ))
     db.commit()
     return {"status": "subscribed"}
 
