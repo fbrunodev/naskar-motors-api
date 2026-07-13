@@ -18,7 +18,7 @@ class SubscribeRequest(BaseModel):
 
 @router.get("/vapid-public-key")
 def get_vapid_public_key():
-    return {"public_key": vapid_keys.get_public_key_b64()}
+    return {"public_key": vapid_keys.VAPID_PUBLIC_KEY}
 
 
 @router.post("/subscribe", status_code=status.HTTP_201_CREATED)
