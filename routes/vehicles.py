@@ -1,5 +1,6 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 from database import get_db
@@ -7,6 +8,10 @@ import models
 import schemas
 import auth
 import notifications
+
+
+class MarkSoldRequest(BaseModel):
+    sold_by_id: Optional[int] = None
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
@@ -105,6 +110,7 @@ def delete_vehicle(
 def mark_vehicle_sold(
     vehicle_id: int,
     background_tasks: BackgroundTasks,
+    data: MarkSoldRequest = Body(default=MarkSoldRequest()),
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -112,28 +118,39 @@ def mark_vehicle_sold(
     if not vehicle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
 
+    # Owner can attribute the sale to a specific employee via sold_by_id
+    if current_user.role == 'owner' and data.sold_by_id:
+        seller = db.query(models.User).filter(models.User.id == data.sold_by_id).first()
+        if not seller:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendedor não encontrado")
+    else:
+        seller = current_user
+
     vehicle.is_sold = True
     vehicle.sold_at = datetime.utcnow()
-    vehicle.sold_by = current_user.id
+    vehicle.sold_by = seller.id
     db.commit()
     db.refresh(vehicle)
 
     veiculo_nome = f"{vehicle.brand} {vehicle.model} {vehicle.year}"
     comissao = float(vehicle.price) * float(vehicle.commission_rate or 2.0) / 100
 
+    # Only notify the seller if they are an employee (not the owner clicking on their own behalf)
+    if seller.role == 'employee':
+        background_tasks.add_task(
+            notifications.notify_vendedor_venda, seller.id, veiculo_nome, comissao
+        )
+
     background_tasks.add_task(
-        notifications.notify_vendedor_venda, current_user.id, veiculo_nome, comissao
-    )
-    background_tasks.add_task(
-        notifications.notify_owner_venda, current_user.name, veiculo_nome, vehicle.price
+        notifications.notify_owner_venda, seller.name, veiculo_nome, vehicle.price
     )
 
-    meta = current_user.monthly_goal or 5
+    meta = seller.monthly_goal or 5
     start_of_month = datetime(datetime.utcnow().year, datetime.utcnow().month, 1)
     vendas_mes = (
         db.query(models.Vehicle)
         .filter(
-            models.Vehicle.sold_by == current_user.id,
+            models.Vehicle.sold_by == seller.id,
             models.Vehicle.is_sold == True,
             models.Vehicle.sold_at >= start_of_month,
         )
@@ -141,11 +158,13 @@ def mark_vehicle_sold(
     )
 
     if vendas_mes == meta:
-        background_tasks.add_task(notifications.notify_vendedor_meta_batida, current_user.id)
-        background_tasks.add_task(notifications.notify_owner_meta_batida, current_user.name)
+        if seller.role == 'employee':
+            background_tasks.add_task(notifications.notify_vendedor_meta_batida, seller.id)
+        background_tasks.add_task(notifications.notify_owner_meta_batida, seller.name)
     elif meta >= 2 and vendas_mes == meta // 2:
-        background_tasks.add_task(
-            notifications.notify_vendedor_50_porcento, current_user.id, vendas_mes, meta
-        )
+        if seller.role == 'employee':
+            background_tasks.add_task(
+                notifications.notify_vendedor_50_porcento, seller.id, vendas_mes, meta
+            )
 
     return {"message": "Vehicle marked as sold"}
