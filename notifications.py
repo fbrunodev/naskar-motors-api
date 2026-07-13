@@ -20,6 +20,7 @@ def send_push(db, user_id: int, title: str, body: str, icon: str = "/icon.png") 
 
     for sub in subs:
         try:
+            logger.info("Enviando push para user_id=%d endpoint=%s", user_id, sub.endpoint[:50])
             webpush(
                 subscription_info={
                     "endpoint": sub.endpoint,
@@ -29,6 +30,7 @@ def send_push(db, user_id: int, title: str, body: str, icon: str = "/icon.png") 
                 vapid_private_key=vapid_keys.VAPID_PRIVATE_KEY,
                 vapid_claims=vapid_keys.VAPID_CLAIMS,
             )
+            logger.info("Push enviado com sucesso para user_id=%d endpoint=%s", user_id, sub.endpoint[:50])
         except WebPushException as exc:
             if exc.response is not None and exc.response.status_code in (403, 404, 410):
                 db.delete(sub)
