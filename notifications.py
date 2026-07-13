@@ -30,7 +30,7 @@ def send_push(db, user_id: int, title: str, body: str, icon: str = "/icon.png") 
                 vapid_claims=vapid_keys.VAPID_CLAIMS,
             )
         except WebPushException as exc:
-            if exc.response and exc.response.status_code in (403, 404, 410):
+            if exc.response is not None and exc.response.status_code in (403, 404, 410):
                 db.delete(sub)
                 db.commit()
             else:
