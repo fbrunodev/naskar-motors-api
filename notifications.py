@@ -33,6 +33,13 @@ def send_push(db, user_id: int, title: str, body: str, icon: str = "/icon.png") 
             logger.info("Push enviado com sucesso para user_id=%d endpoint=%s", user_id, sub.endpoint[:50])
         except WebPushException as exc:
             if exc.response is not None and exc.response.status_code in (403, 404, 410):
+                logger.error(
+                    "Push rejeitado user_id=%d endpoint=%s status=%d body=%s",
+                    user_id,
+                    sub.endpoint[:60],
+                    exc.response.status_code,
+                    exc.response.text if hasattr(exc.response, "text") else "n/a",
+                )
                 db.delete(sub)
                 db.commit()
             else:
