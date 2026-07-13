@@ -60,6 +60,15 @@ class VehicleBase(BaseModel):
     fuel: Optional[str] = None
     doors: Optional[int] = None
     body_type: Optional[str] = None
+    cilindrada: Optional[int] = None
+    marchas: Optional[int] = None
+    motor_type: Optional[str] = None
+    cooling: Optional[str] = None
+    moto_style: Optional[str] = None
+    starter: Optional[str] = None
+    front_brake: Optional[str] = None
+    rear_brake: Optional[str] = None
+    fuel_system: Optional[str] = None
     brand_id: Optional[int] = None
     model_id: Optional[int] = None
     features: List[str] = []
