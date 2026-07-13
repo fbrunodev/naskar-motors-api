@@ -25,7 +25,12 @@ app = FastAPI(title="Naskar Motors API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://naskar-motors-frontend-git-master-fbdev-s-projects.vercel.app",
+        "https://naskar-motors-frontend.vercel.app",
+        "https://*.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
