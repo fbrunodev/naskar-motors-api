@@ -17,10 +17,13 @@ def seed():
         if existing_owner:
             print(f"Owner already exists ({existing_owner.email}), skipping.")
         else:
+            _password = os.getenv("SEED_OWNER_PASSWORD")
+            if not _password:
+                raise ValueError("SEED_OWNER_PASSWORD environment variable must be set before running seed")
             owner = models.User(
                 name=os.getenv("SEED_OWNER_NAME", "Admin"),
                 email=os.getenv("SEED_OWNER_EMAIL", "admin@naskar-motors.com"),
-                password_hash=auth.hash_password(os.getenv("SEED_OWNER_PASSWORD", "changeme123")),
+                password_hash=auth.hash_password(_password),
                 role="owner",
                 is_active=True,
             )
